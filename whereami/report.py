@@ -48,6 +48,22 @@ def summarize(results: list[CheckResult]) -> Counter:
     return Counter(result.verdict for result in results)
 
 
+def format_summary_lines(counts: Counter, use_color: bool = True) -> list[str]:
+    rows = [
+        ("Found", Verdict.FOUND, Colors.GREEN),
+        ("Not found", Verdict.NOT_FOUND, None),
+        ("Uncertain", Verdict.UNCERTAIN, Colors.YELLOW),
+        ("Errors", Verdict.ERROR, Colors.DIM),
+    ]
+    lines = []
+    for label, verdict, color in rows:
+        text = f"{label + ':':<11}{counts.get(verdict, 0)}"
+        if use_color and color:
+            text = f"{color}{text}{Colors.RESET}"
+        lines.append(text)
+    return lines
+
+
 def group_by_category(results: list[CheckResult]) -> dict[str, list[CheckResult]]:
     grouped: dict[str, list[CheckResult]] = {}
     for result in results:
