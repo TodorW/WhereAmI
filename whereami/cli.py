@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from . import __version__
+from .breach import BreachCheckError, check_breaches
 from .checker import Verdict
 from .concurrency import DEFAULT_MAX_WORKERS, DEFAULT_PER_HOST_CONCURRENCY, MAX_ALLOWED_WORKERS, run_checks
 from .config import ConfigError, load_config
@@ -60,6 +61,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--diff",
         metavar="PREVIOUS_JSON",
         help="compare against a previous --output json export and show what changed",
+    )
+    parser.add_argument(
+        "--check-breach",
+        action="store_true",
+        help="check --email against Have I Been Pwned (requires the HIBP_API_KEY env var)",
     )
     parser.add_argument("--output", help="write results to this file, or '-' for stdout")
     parser.add_argument("--format", choices=["json", "csv"], default=None, help="format for --output")
@@ -117,17 +123,19 @@ def resolve_settings(args: argparse.Namespace, config: dict) -> Settings:
         raise ConfigError(f"invalid setting: {exc}") from exc
 
 
-def resolve_identity(args: argparse.Namespace) -> str:
+def resolve_identity(args: argparse.Namespace) -> tuple[str, str | None]:
+    """Returns (username_to_check, email_if_one_was_given)."""
     if args.username:
-        return validate_username(args.username)
+        return validate_username(args.username), None
     if args.email:
         email = validate_email(args.email)
-        return validate_username(email_local_part(email))
+        return validate_username(email_local_part(email)), email
 
     raw = input("Enter a username (or email) to check: ").strip()
     if "@" in raw:
-        return validate_username(email_local_part(validate_email(raw)))
-    return validate_username(raw)
+        email = validate_email(raw)
+        return validate_username(email_local_part(email)), email
+    return validate_username(raw), None
 
 
 def select_sites(categories: list[str] | None) -> list:
@@ -154,9 +162,13 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     try:
-        value = resolve_identity(args)
+        value, email_for_breach = resolve_identity(args)
     except ValidationError as exc:
         print(f"error: {exc}", file=sys.stderr)
+        return 1
+
+    if args.check_breach and not email_for_breach:
+        print("error: --check-breach requires an email address", file=sys.stderr)
         return 1
 
     sites = select_sites(settings.categories)
@@ -193,6 +205,19 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Not found: {counts.get(Verdict.NOT_FOUND, 0)}")
         print(f"Uncertain: {counts.get(Verdict.UNCERTAIN, 0)}")
         print(f"Errors:    {counts.get(Verdict.ERROR, 0)}")
+
+    if args.check_breach:
+        try:
+            breaches = check_breaches(email_for_breach, timeout=settings.timeout)
+        except BreachCheckError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 1
+        if not quiet:
+            print("\n--- Have I Been Pwned ---")
+            if breaches:
+                print(f"Found in {len(breaches)} breach(es): {', '.join(breaches)}")
+            else:
+                print("No breaches found")
 
     if args.diff:
         try:
