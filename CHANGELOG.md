@@ -1,5 +1,34 @@
 # Changelog
 
+## 2.1.0
+
+### Added
+- Per-host concurrency limiting (`--host-concurrency`, default 2) so a scan
+  can't hammer one target even at a high overall `--workers` count.
+- `--diff PREVIOUS_JSON` to compare a scan against an earlier JSON export
+  and report which sites newly appeared or disappeared as "found".
+- Config file support: `~/.whereami.toml` (or `--config PATH`) for default
+  `workers`, `timeout`, `host_concurrency`, `categories`, `only_found`,
+  `no_color`, and `format`; CLI flags always take precedence. See
+  `whereami.example.toml`.
+- `--check-breach` — optional Have I Been Pwned lookup for `--email`. The
+  API key is read only from the `HIBP_API_KEY` environment variable, never
+  a CLI flag, so it can't leak into shell history or process listings.
+- `--quiet` and `--output -` (stdout) for scripting/piping into `jq`.
+- Colorized summary line in terminal output.
+- Bash completion script (`completions/whereami.bash`).
+
+### Changed
+- Twitch upgraded from low to medium confidence: verified that the static
+  page title stays `Twitch` for missing accounts vs. `{Name} - Twitch` for
+  real ones, giving a reliable not-found marker.
+- Minimum Python bumped to 3.11 (uses stdlib `tomllib` for config parsing,
+  avoiding an extra dependency).
+
+### Removed
+- GoFundMe entry: its URL addresses a campaign slug, not a user account, so
+  a username there never told you anything real about the account.
+
 ## 2.0.0
 
 Full rewrite from the original single-file script.
