@@ -1,3 +1,5 @@
+import threading
+import time
 from unittest.mock import patch
 
 from whereami.checker import CheckResult, Verdict
@@ -36,3 +38,29 @@ def test_worker_count_is_capped(mock_check, mock_session):
     # Should not raise or hang even when asked for an absurd worker count.
     results = run_checks(SITES, "someone", max_workers=MAX_ALLOWED_WORKERS * 100)
     assert len(results) == len(SITES)
+
+
+def test_per_host_concurrency_is_enforced():
+    # All SITES share the same host (example.com), so this proves the
+    # semaphore actually bounds concurrent in-flight requests per host.
+    lock = threading.Lock()
+    active = 0
+    max_seen = 0
+
+    def _slow_check(session, site, value, timeout):
+        nonlocal active, max_seen
+        with lock:
+            active += 1
+            max_seen = max(max_seen, active)
+        time.sleep(0.05)
+        with lock:
+            active -= 1
+        return CheckResult(site, Verdict.FOUND, "status 200", "https://example.com/x")
+
+    with (
+        patch("whereami.concurrency.build_session"),
+        patch("whereami.concurrency.check_site", side_effect=_slow_check),
+    ):
+        run_checks(SITES, "someone", max_workers=5, per_host_concurrency=2)
+
+    assert max_seen <= 2
