@@ -93,7 +93,13 @@ SITES: list[Site] = [
     Site("YouTube", Category.VIDEO, "https://www.youtube.com/@{value}", Confidence.MEDIUM),
     Site("Vimeo", Category.VIDEO, "https://vimeo.com/{value}", Confidence.MEDIUM),
     Site("Dailymotion", Category.VIDEO, "https://www.dailymotion.com/{value}", Confidence.MEDIUM),
-    Site("Twitch", Category.VIDEO, "https://www.twitch.tv/{value}", Confidence.LOW),
+    Site(
+        "Twitch",
+        Category.VIDEO,
+        "https://www.twitch.tv/{value}",
+        Confidence.MEDIUM,
+        not_found_marker="<title>Twitch</title>",
+    ),
 
     # Music
     Site("SoundCloud", Category.MUSIC, "https://soundcloud.com/{value}", Confidence.MEDIUM),
