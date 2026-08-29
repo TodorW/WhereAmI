@@ -8,7 +8,7 @@ version = "2.0.0"
 description = "Check which sites have a public profile for a username or email"
 readme = "README.md"
 license = { file = "LICENSE" }
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = ["requests>=2.32.3,<3"]
 
 [project.scripts]
@@ -19,7 +19,7 @@ include = ["whereami*"]
 
 [tool.ruff]
 line-length = 110
-target-version = "py310"
+target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
