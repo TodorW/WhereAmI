@@ -4,205 +4,130 @@
 
 ## 📖 Overview
 
-**WhereAmI** is a powerful Python-based OSINT (Open Source Intelligence) tool designed for educational and security research purposes. It helps you discover which online services and platforms have accounts associated with your email address, giving you visibility into your digital footprint across the web.
+**WhereAmI** is a Python CLI that checks whether a username (or the local
+part of an email address) has a public profile across ~45 real, verifiable
+sites — GitHub, Reddit, PyPI, Steam, and more. It's built for personal
+digital-footprint audits and OSINT education.
 
 ## ⚠️ Disclaimer
 
 **THIS TOOL IS FOR EDUCATIONAL AND PERSONAL SECURITY AUDITING PURPOSES ONLY**
 
-- ✅ **Allowed**: Checking your own email addresses
+- ✅ **Allowed**: Checking your own accounts
 - ✅ **Allowed**: Security research with proper authorization
-- ✅ **Allowed**: Learning about web scraping and API integration
-- ❌ **Not Allowed**: Checking others' emails without permission
+- ✅ **Allowed**: Learning about web requests and OSINT methodology
+- ❌ **Not Allowed**: Checking others' identities without permission
 - ❌ **Not Allowed**: Malicious or harassing activities
 - ❌ **Not Allowed**: Violating websites' terms of service
 
 By using this tool, you agree to use it responsibly and legally.
 
-## 🚀 Features
-
-- **🔍 100+ Site Coverage**: Checks accounts across social media, professional networks, gaming platforms, and more
-- **📊 Categorized Results**: Organized output by platform type (Social Media, Professional, Gaming, etc.)
-- **⚡ Smart Detection**: Uses multiple HTTP methods and status code analysis
-- **🎯 Progress Tracking**: Real-time progress with site count and status
-- **📈 Summary Report**: Comprehensive results breakdown at completion
-- **🛡️ Rate Limiting**: Built-in delays to respect server resources
-- **❌ Error Handling**: Robust error management with descriptive status codes
-
 ## 📦 Installation
 
-### Prerequisites
-- Python 3.6+
-- pip package manager
-
-### Setup
 ```bash
-# Clone the repository
 git clone https://github.com/TodorW/WhereAmI.git
 cd WhereAmI
-
-# Install dependencies
 pip install -r requirements.txt
 ```
 
-### Dependencies
-The `requirements.txt` contains:
-```txt
-requests>=2.25.1
-```
+Requires Python 3.10+.
 
 ## 🎯 Usage
 
-### Basic Usage
 ```bash
+# by username (recommended — most sites key profiles by username, not email)
+python whereami.py --username your_handle
+
+# by email (uses the part before the @ as the username)
+python whereami.py --email you@example.com
+
+# no flags: prompts interactively
 python whereami.py
+
+# filter to one or more categories
+python whereami.py --username your_handle --category Development --category Gaming
+
+# only show hits, write full results to a file
+python whereami.py --username your_handle --only-found --output results.json
+
+# list available categories
+python whereami.py --list-categories
 ```
 
-### Interactive Mode
-1. Run the script
-2. Enter your email when prompted
-3. Watch real-time progress across 100+ sites
-4. Review the comprehensive summary report
+Also runnable as `python -m whereami` or, once installed, as `whereami`.
 
 ### Example Output
+
 ```
-🔍 Checking: example@email.com
-========================================
+Checking 'your_handle' against 46 sites...
 
-🔐 Social Media
-----------------------------------------
-[1/100] Facebook                    ✓ Possible account exists
-[2/100] Twitter/X                   ✗ No account found
-[3/100] Instagram                   ? Status: 302
+✓ GitHub (high confidence) - status 200
+✗ Reddit - status 404
+? Facebook - status 302
 
-📊 SUMMARY
-========================================
-✅ Possible accounts: 15
-❓ Uncertain: 23  
-❌ Failed checks: 62
-📧 Total sites checked: 100
+--- Summary ---
+Found:     6
+Not found: 30
+Uncertain: 8
+Errors:    2
 ```
 
 ## 🏗️ Architecture
 
-### Core Components
-- **Site Database**: Curated list of 100+ popular websites
-- **HTTP Engine**: Intelligent request handling with proper headers
-- **Analysis Module**: Status code interpretation and pattern matching
-- **Reporting System**: Categorized results with summary statistics
+- `whereami/sites.py` — the site database: name, category, URL template,
+  and an honest `confidence` rating per site.
+- `whereami/checker.py` — single-site check: builds the URL, makes the
+  request, interprets the response into a `Verdict`.
+- `whereami/concurrency.py` — runs checks concurrently (worker count
+  capped at 20 to avoid hammering targets).
+- `whereami/http_client.py` — shared `requests.Session` with retry/backoff
+  and an HTTPS-only transport (the `http://` adapter is removed entirely).
+- `whereami/report.py` / `whereami/export.py` — console output and
+  JSON/CSV export.
+- `whereami/cli.py` — argument parsing and orchestration.
 
-### Detection Methods
-- **HTTP Status Codes**: 200 (exists), 404 (not found), others (uncertain)
-- **Response Analysis**: Redirect patterns and error pages
-- **Rate Limiting**: 300ms delays between requests
-- **Error Resilience**: Timeout and connection error handling
+### Why `confidence` matters
 
-## 📋 Supported Platforms
+Some platforms (GitHub, PyPI, Reddit's JSON API) reliably return 404 for a
+missing account — those are `high` confidence. Others are client-rendered
+single-page apps or sit behind bot protection and tend to return `200` for
+almost anything (Instagram, TikTok, Twitter/X) — those are marked `low`.
+A `low`-confidence hit is a lead worth checking manually, not proof.
 
-### Categories Include:
-- **Social Media** (Facebook, Twitter, Instagram, LinkedIn, etc.)
-- **Professional** (GitHub, StackOverflow, Behance, etc.)
-- **Gaming** (Steam, Epic Games, Xbox, PlayStation, etc.)
-- **E-commerce** (Amazon, eBay, Etsy, etc.)
-- **Streaming** (YouTube, Twitch, Netflix, Spotify, etc.)
-- **Finance** (PayPal, Venmo, Robinhood, etc.)
-- **Development** (npm, Docker Hub, PyPI, etc.)
-- **And many more...**
+## 📋 Supported Categories
 
-## 🔧 Technical Details
-
-### HTTP Methods
-- **GET Requests**: Primary detection method
-- **HEAD Requests**: Alternative for some sites
-- **Custom Headers**: Realistic User-Agent strings
-- **Timeout Handling**: 8-second request timeouts
-
-### Status Interpretation
-- **✓ Possible account exists** (200 status)
-- **✗ No account found** (404 status)  
-- **? Status: XXX** (Other HTTP status codes)
-- **⏰ Timeout** (Request timed out)
-- **🔌 Connection failed** (Network issues)
-- **❌ Request failed** (General failure)
+Social Media, Professional, Video & Streaming, Music, Gaming, Photo,
+Development, Design, Productivity, Community & Forums, Fitness, Funding &
+Crowdsourcing. Run `--list-categories` for the exact list.
 
 ## 🛡️ Privacy & Security
 
-### Data Handling
-- Your email is never stored or transmitted to our servers
-- All checks happen locally on your machine
-- No persistent logging of results
-- Temporary memory-only processing
-
-### Ethical Considerations
-- Built for personal security auditing
-- Encourages digital footprint awareness
-- Promotes account cleanup and security hygiene
-- Educational tool for cybersecurity students
-
-## 🤝 Contributing
-
-We welcome contributions! Here's how you can help:
-
-### Adding New Sites
-1. Fork the repository
-2. Add site to the appropriate category in `sites` dictionary
-3. Test the detection method
-4. Submit a pull request
-
-### Categories Needed:
-- Regional platforms (country-specific sites)
-- Niche community forums
-- Emerging social platforms
-- Specialized professional networks
-
-### Reporting Issues
-- Create GitHub issues for bug reports
-- Suggest new features or improvements
-- Share your testing results
-
-## 📊 Real-World Applications
-
-### Personal Use
-- **Digital Spring Cleaning**: Identify old accounts to delete
-- **Security Auditing**: Discover potential breach exposure
-- **Account Recovery**: Find forgotten service registrations
-
-### Educational Use
-- **Cybersecurity Courses**: OSINT methodology demonstration
-- **Web Scraping Lessons**: HTTP request/response analysis
-- **Privacy Workshops**: Digital footprint awareness
-
-### Professional Use
-- **Security Research**: Account enumeration studies
-- **Penetration Testing**: Authorized client assessments
-- **Digital Forensics**: Incident response investigations
+- Nothing is written to disk unless you pass `--output`.
+- All checks happen locally, directly from your machine to the target site.
+- The HTTP session cannot make plaintext `http://` requests — only `https://`.
+- Every request has a timeout; a limited retry with backoff handles
+  transient failures without hanging indefinitely.
+- CI runs `bandit` (static security analysis) and `pip-audit` (dependency
+  CVE scanning) on every change — see [SECURITY.md](SECURITY.md).
 
 ## 🚨 Limitations & Accuracy
 
-### Technical Limitations
-- Many sites block automated requests
-- Rate limiting may cause false negatives
-- CAPTCHA-protected sites cannot be checked
-- Private profiles may not be detectable
+- Sites marked `low` confidence often return 200 regardless of whether the
+  account exists (SPA rendering, anti-bot pages) — treat those as leads.
+- Sites with aggressive bot protection may block automated requests
+  entirely, showing as timeouts or connection errors.
+- Results are indicative, not definitive, even for `high` confidence sites.
 
-### Accuracy Notes
-- **False Positives**: Possible due to similar usernames
-- **False Negatives**: Common with anti-bot measures
-- **Estimated Accuracy**: ~40-60% for detectable sites
-- **Results are indicative, not definitive**
+## 🤝 Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, local checks, and how to
+add a new site to the database.
 
 ## 📝 License
 
-MIT License - See LICENSE file for details
-
-## 🙏 Acknowledgments
-
-- Inspired by OSINT community tools
-- Built for educational purposes
-- Thanks to all contributors and testers
+MIT License - see [LICENSE](LICENSE).
 
 ---
 
-**Remember**: With great power comes great responsibility. Use WhereAmI to improve your digital hygiene, not to invade others' privacy.
-
-**⭐ If you find this useful, please give it a star on GitHub!**
+**Remember**: use WhereAmI to improve your own digital hygiene, not to
+invade someone else's privacy.
