@@ -9,7 +9,7 @@ description = "Check which sites have a public profile for a username or email"
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.11"
-dependencies = ["requests>=2.32.3,<3"]
+dependencies = ["requests>=2.34.2,<3"]
 
 [project.scripts]
 whereami = "whereami.cli:main"
