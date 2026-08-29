@@ -130,3 +130,36 @@ def test_bad_config_file_returns_error(capsys, tmp_path):
     exit_code = cli.main(["--username", "torvalds", "--config", str(config_path)])
     assert exit_code == 1
     assert "error" in capsys.readouterr().err
+
+
+def test_check_breach_requires_email_not_username(capsys):
+    exit_code = cli.main(["--username", "torvalds", "--check-breach"])
+    assert exit_code == 1
+    assert "requires an email" in capsys.readouterr().err
+
+
+@patch("whereami.cli.run_checks", side_effect=_fake_run_checks)
+@patch("whereami.cli.check_breaches", return_value=[])
+def test_check_breach_reports_no_breaches(mock_breach, mock_run, capsys):
+    exit_code = cli.main(["--email", "torvalds@example.com", "--no-color", "--check-breach"])
+    out = capsys.readouterr().out
+    assert exit_code == 0
+    assert "No breaches found" in out
+    assert mock_breach.call_args[0][0] == "torvalds@example.com"
+
+
+@patch("whereami.cli.run_checks", side_effect=_fake_run_checks)
+@patch("whereami.cli.check_breaches", return_value=["Adobe", "LinkedIn"])
+def test_check_breach_reports_found_breaches(mock_breach, mock_run, capsys):
+    exit_code = cli.main(["--email", "torvalds@example.com", "--no-color", "--check-breach"])
+    out = capsys.readouterr().out
+    assert exit_code == 0
+    assert "Adobe" in out and "LinkedIn" in out
+
+
+@patch("whereami.cli.run_checks", side_effect=_fake_run_checks)
+@patch("whereami.cli.check_breaches", side_effect=cli.BreachCheckError("no api key"))
+def test_check_breach_error_returns_exit_1(mock_breach, mock_run, capsys):
+    exit_code = cli.main(["--email", "torvalds@example.com", "--no-color", "--check-breach"])
+    assert exit_code == 1
+    assert "no api key" in capsys.readouterr().err
