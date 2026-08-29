@@ -149,7 +149,8 @@ SITES: list[Site] = [
     # Funding & Crowdsourcing
     Site("Kickstarter", Category.FUNDING, "https://www.kickstarter.com/profile/{value}", Confidence.MEDIUM),
     Site("Patreon", Category.FUNDING, "https://www.patreon.com/{value}", Confidence.MEDIUM),
-    Site("GoFundMe", Category.FUNDING, "https://www.gofundme.com/f/{value}", Confidence.LOW),
+    # GoFundMe deliberately excluded: /f/{slug} addresses a campaign, not a
+    # user account, so a username there tells you nothing about the account.
 ]
 
 
