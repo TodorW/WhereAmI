@@ -28,7 +28,9 @@ def build_parser() -> argparse.ArgumentParser:
         choices=[c.value for c in Category],
         help="limit the scan to one category (repeatable)",
     )
-    parser.add_argument("--only-found", action="store_true", help="only print sites where an account was found")
+    parser.add_argument(
+        "--only-found", action="store_true", help="only print sites where an account was found"
+    )
     parser.add_argument(
         "--workers",
         type=int,

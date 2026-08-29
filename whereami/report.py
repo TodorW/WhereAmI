@@ -35,7 +35,8 @@ def supports_color(stream=sys.stdout) -> bool:
 
 def format_result_line(result: CheckResult, use_color: bool = True) -> str:
     icon = _ICONS[result.verdict]
-    confidence_tag = f" ({result.site.confidence.value} confidence)" if result.verdict == Verdict.FOUND else ""
+    is_found = result.verdict == Verdict.FOUND
+    confidence_tag = f" ({result.site.confidence.value} confidence)" if is_found else ""
     line = f"{icon} {result.site.name}{confidence_tag} - {result.detail}"
     if not use_color:
         return line
