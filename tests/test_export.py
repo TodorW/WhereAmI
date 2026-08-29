@@ -32,3 +32,17 @@ def test_export_csv_writes_expected_rows(tmp_path):
         rows = list(csv.DictReader(handle))
     assert rows[0]["site"] == "GitHub"
     assert rows[0]["verdict"] == "found"
+
+
+def test_export_json_to_stdout(capsys):
+    export_json(RESULTS, "-")
+    out = capsys.readouterr().out
+    data = json.loads(out)
+    assert data[0]["site"] == "GitHub"
+
+
+def test_export_csv_to_stdout(capsys):
+    export_csv(RESULTS, "-")
+    out = capsys.readouterr().out
+    rows = list(csv.DictReader(out.splitlines()))
+    assert rows[0]["site"] == "GitHub"
