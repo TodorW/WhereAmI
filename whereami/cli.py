@@ -13,7 +13,7 @@ from .config import ConfigError, load_config
 from .export import export_csv, export_json
 from .history import HistoryError, diff_founds, load_previous_founds
 from .http_client import DEFAULT_TIMEOUT_SECONDS
-from .report import format_result_line, summarize, supports_color
+from .report import format_result_line, format_summary_lines, summarize, supports_color
 from .sites import SITES, Category
 from .validators import ValidationError, email_local_part, validate_email, validate_username
 
@@ -201,10 +201,8 @@ def main(argv: list[str] | None = None) -> int:
     if not quiet:
         counts = summarize(results)
         print("\n--- Summary ---")
-        print(f"Found:     {counts.get(Verdict.FOUND, 0)}")
-        print(f"Not found: {counts.get(Verdict.NOT_FOUND, 0)}")
-        print(f"Uncertain: {counts.get(Verdict.UNCERTAIN, 0)}")
-        print(f"Errors:    {counts.get(Verdict.ERROR, 0)}")
+        for line in format_summary_lines(counts, use_color=use_color):
+            print(line)
 
     if args.check_breach:
         try:
