@@ -82,3 +82,51 @@ def test_diff_with_missing_file_errors(mock_run, capsys):
     exit_code = cli.main(["--username", "torvalds", "--no-color", "--diff", "/nope.json"])
     assert exit_code == 1
     assert "error" in capsys.readouterr().err
+
+
+@patch("whereami.cli.run_checks", side_effect=_fake_run_checks)
+def test_quiet_suppresses_stdout(mock_run, capsys):
+    exit_code = cli.main(["--username", "torvalds", "--quiet"])
+    out = capsys.readouterr().out
+    assert exit_code == 0
+    assert out == ""
+
+
+@patch("whereami.cli.run_checks", side_effect=_fake_run_checks)
+def test_quiet_still_writes_output_file(mock_run, capsys, tmp_path):
+    out_path = tmp_path / "results.json"
+    exit_code = cli.main(["--username", "torvalds", "--quiet", "--output", str(out_path)])
+    assert exit_code == 0
+    assert capsys.readouterr().out == ""
+    data = json.loads(out_path.read_text(encoding="utf-8"))
+    assert data[0]["site"] == "GitHub"
+
+
+@patch("whereami.cli.run_checks", side_effect=_fake_run_checks)
+def test_config_file_sets_defaults(mock_run, capsys, tmp_path):
+    config_path = tmp_path / "cfg.toml"
+    config_path.write_text('workers = 3\ncategories = ["Development"]\n', encoding="utf-8")
+
+    cli.main(["--username", "torvalds", "--no-color", "--config", str(config_path)])
+    called_sites = mock_run.call_args[0][0]
+    called_kwargs = mock_run.call_args[1]
+    assert called_kwargs["max_workers"] == 3
+    assert all(site.category.value == "Development" for site in called_sites)
+
+
+@patch("whereami.cli.run_checks", side_effect=_fake_run_checks)
+def test_cli_flag_overrides_config_file(mock_run, capsys, tmp_path):
+    config_path = tmp_path / "cfg.toml"
+    config_path.write_text("workers = 3\n", encoding="utf-8")
+
+    cli.main(["--username", "torvalds", "--no-color", "--config", str(config_path), "--workers", "7"])
+    assert mock_run.call_args[1]["max_workers"] == 7
+
+
+def test_bad_config_file_returns_error(capsys, tmp_path):
+    config_path = tmp_path / "cfg.toml"
+    config_path.write_text("nonsense_key = 1\n", encoding="utf-8")
+
+    exit_code = cli.main(["--username", "torvalds", "--config", str(config_path)])
+    assert exit_code == 1
+    assert "error" in capsys.readouterr().err
