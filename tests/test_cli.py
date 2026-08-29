@@ -1,3 +1,4 @@
+import json
 from unittest.mock import patch
 
 import pytest
@@ -61,3 +62,21 @@ def test_select_sites_filters_by_category():
     selected = cli.select_sites(args)
     assert selected
     assert all(site.category.value == "Development" for site in selected)
+
+
+@patch("whereami.cli.run_checks", side_effect=_fake_run_checks)
+def test_diff_reports_new_hit(mock_run, capsys, tmp_path):
+    previous = tmp_path / "previous.json"
+    previous.write_text(json.dumps([]), encoding="utf-8")
+
+    exit_code = cli.main(["--username", "torvalds", "--no-color", "--diff", str(previous)])
+    out = capsys.readouterr().out
+    assert exit_code == 0
+    assert "New: GitHub" in out
+
+
+@patch("whereami.cli.run_checks", side_effect=_fake_run_checks)
+def test_diff_with_missing_file_errors(mock_run, capsys):
+    exit_code = cli.main(["--username", "torvalds", "--no-color", "--diff", "/nope.json"])
+    assert exit_code == 1
+    assert "error" in capsys.readouterr().err
