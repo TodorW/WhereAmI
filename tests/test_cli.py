@@ -5,7 +5,7 @@ import pytest
 
 from whereami import cli
 from whereami.checker import CheckResult, Verdict
-from whereami.sites import Category, Confidence, Site
+from whereami.sites import SITES, Category, Confidence, Site
 
 SITE = Site("GitHub", Category.DEVELOPMENT, "https://api.github.com/users/{value}", Confidence.HIGH)
 
@@ -57,11 +57,13 @@ def test_unknown_category_filter_rejected_by_argparse():
 
 
 def test_select_sites_filters_by_category():
-    parser = cli.build_parser()
-    args = parser.parse_args(["--username", "x", "--category", "Development"])
-    selected = cli.select_sites(args)
+    selected = cli.select_sites(["Development"])
     assert selected
     assert all(site.category.value == "Development" for site in selected)
+
+
+def test_select_sites_with_no_filter_returns_all():
+    assert cli.select_sites(None) == SITES
 
 
 @patch("whereami.cli.run_checks", side_effect=_fake_run_checks)
