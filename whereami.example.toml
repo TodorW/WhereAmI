@@ -1,0 +1,10 @@
+# Copy this to ~/.whereami.toml (or pass --config <path>) to set your own
+# defaults. Every key here is optional; CLI flags always override these.
+
+workers = 8
+timeout = 8
+host_concurrency = 2
+only_found = false
+no_color = false
+format = "json"
+categories = ["Development", "Gaming"]
