@@ -9,7 +9,7 @@ from whereami.sites import Category, Confidence, Site
 SITE = Site("GitHub", Category.DEVELOPMENT, "https://api.github.com/users/{value}", Confidence.HIGH)
 
 
-def _fake_run_checks(sites, value, max_workers, timeout, on_result=None):
+def _fake_run_checks(sites, value, max_workers, timeout, on_result=None, per_host_concurrency=2):
     result = CheckResult(SITE, Verdict.FOUND, "status 200", "https://api.github.com/users/x")
     if on_result:
         on_result(result)

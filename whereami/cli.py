@@ -5,7 +5,7 @@ import sys
 
 from . import __version__
 from .checker import Verdict
-from .concurrency import DEFAULT_MAX_WORKERS, MAX_ALLOWED_WORKERS, run_checks
+from .concurrency import DEFAULT_MAX_WORKERS, DEFAULT_PER_HOST_CONCURRENCY, MAX_ALLOWED_WORKERS, run_checks
 from .export import export_csv, export_json
 from .http_client import DEFAULT_TIMEOUT_SECONDS
 from .report import format_result_line, summarize, supports_color
@@ -42,6 +42,12 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=DEFAULT_TIMEOUT_SECONDS,
         help=f"per-request timeout in seconds (default {DEFAULT_TIMEOUT_SECONDS})",
+    )
+    parser.add_argument(
+        "--host-concurrency",
+        type=int,
+        default=DEFAULT_PER_HOST_CONCURRENCY,
+        help=f"max simultaneous requests to the same host (default {DEFAULT_PER_HOST_CONCURRENCY})",
     )
     parser.add_argument("--output", help="write results to this file")
     parser.add_argument("--format", choices=["json", "csv"], default="json", help="format for --output")
@@ -99,7 +105,14 @@ def main(argv: list[str] | None = None) -> int:
             return
         print(format_result_line(result, use_color=use_color))
 
-    results = run_checks(sites, value, max_workers=args.workers, timeout=args.timeout, on_result=on_result)
+    results = run_checks(
+        sites,
+        value,
+        max_workers=args.workers,
+        timeout=args.timeout,
+        on_result=on_result,
+        per_host_concurrency=args.host_concurrency,
+    )
 
     counts = summarize(results)
     print("\n--- Summary ---")
