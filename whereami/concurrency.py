@@ -8,6 +8,7 @@ from .http_client import DEFAULT_TIMEOUT_SECONDS, build_session
 from .sites import Site
 
 DEFAULT_MAX_WORKERS = 8
+MAX_ALLOWED_WORKERS = 20
 
 
 def run_checks(
@@ -18,6 +19,7 @@ def run_checks(
     on_result: Callable[[CheckResult], None] | None = None,
 ) -> list[CheckResult]:
     sites = list(sites)
+    max_workers = max(1, min(max_workers, MAX_ALLOWED_WORKERS))
     session = build_session()
     results: list[CheckResult] = []
 
