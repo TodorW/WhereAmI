@@ -7,6 +7,7 @@ from . import __version__
 from .checker import Verdict
 from .concurrency import DEFAULT_MAX_WORKERS, DEFAULT_PER_HOST_CONCURRENCY, MAX_ALLOWED_WORKERS, run_checks
 from .export import export_csv, export_json
+from .history import HistoryError, diff_founds, load_previous_founds
 from .http_client import DEFAULT_TIMEOUT_SECONDS
 from .report import format_result_line, summarize, supports_color
 from .sites import SITES, Category
@@ -48,6 +49,11 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=DEFAULT_PER_HOST_CONCURRENCY,
         help=f"max simultaneous requests to the same host (default {DEFAULT_PER_HOST_CONCURRENCY})",
+    )
+    parser.add_argument(
+        "--diff",
+        metavar="PREVIOUS_JSON",
+        help="compare against a previous --output json export and show what changed",
     )
     parser.add_argument("--output", help="write results to this file")
     parser.add_argument("--format", choices=["json", "csv"], default="json", help="format for --output")
@@ -120,6 +126,21 @@ def main(argv: list[str] | None = None) -> int:
     print(f"Not found: {counts.get(Verdict.NOT_FOUND, 0)}")
     print(f"Uncertain: {counts.get(Verdict.UNCERTAIN, 0)}")
     print(f"Errors:    {counts.get(Verdict.ERROR, 0)}")
+
+    if args.diff:
+        try:
+            previous_founds = load_previous_founds(args.diff)
+        except HistoryError as exc:
+            print(f"\nerror: {exc}", file=sys.stderr)
+            return 1
+        new, lost = diff_founds(previous_founds, results)
+        print("\n--- Changes since last scan ---")
+        if new:
+            print(f"New: {', '.join(sorted(new))}")
+        if lost:
+            print(f"Lost: {', '.join(sorted(lost))}")
+        if not new and not lost:
+            print("No change")
 
     if args.output:
         exporter = export_json if args.format == "json" else export_csv
