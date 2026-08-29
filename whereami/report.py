@@ -45,3 +45,10 @@ def format_result_line(result: CheckResult, use_color: bool = True) -> str:
 
 def summarize(results: list[CheckResult]) -> Counter:
     return Counter(result.verdict for result in results)
+
+
+def group_by_category(results: list[CheckResult]) -> dict[str, list[CheckResult]]:
+    grouped: dict[str, list[CheckResult]] = {}
+    for result in results:
+        grouped.setdefault(result.site.category.value, []).append(result)
+    return grouped
