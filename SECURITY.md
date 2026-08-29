@@ -19,6 +19,14 @@ Please include:
 - Steps to reproduce
 - The version/commit affected
 
+## API Keys
+
+The optional `--check-breach` feature (Have I Been Pwned) reads its API key
+only from the `HIBP_API_KEY` environment variable. It is never accepted as a
+CLI flag, because a flag value ends up in shell history and in `ps` output
+visible to other local users; an environment variable set via a secrets
+manager or an un-exported shell command does not.
+
 ## Supported Versions
 
 Only the latest commit on `main` is supported. There are no long-term
