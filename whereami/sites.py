@@ -15,10 +15,10 @@ for every single lookup, which is worse than not checking at all.
 """
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 
 
-class Category(str, Enum):
+class Category(StrEnum):
     SOCIAL = "Social Media"
     PROFESSIONAL = "Professional"
     VIDEO = "Video & Streaming"
@@ -33,7 +33,7 @@ class Category(str, Enum):
     FUNDING = "Funding & Crowdsourcing"
 
 
-class Confidence(str, Enum):
+class Confidence(StrEnum):
     HIGH = "high"
     MEDIUM = "medium"
     LOW = "low"

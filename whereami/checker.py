@@ -1,7 +1,7 @@
 """Core single-site check logic."""
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from urllib.parse import quote
 
 import requests
@@ -10,7 +10,7 @@ from .http_client import DEFAULT_TIMEOUT_SECONDS
 from .sites import Site
 
 
-class Verdict(str, Enum):
+class Verdict(StrEnum):
     FOUND = "found"
     NOT_FOUND = "not_found"
     UNCERTAIN = "uncertain"
