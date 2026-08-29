@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "whereami"
-version = "2.0.0"
+version = "2.1.0"
 description = "Check which sites have a public profile for a username or email"
 readme = "README.md"
 license = { file = "LICENSE" }
